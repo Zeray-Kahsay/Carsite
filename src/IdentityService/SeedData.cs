@@ -12,12 +12,15 @@ public class SeedData
 {
     public static void EnsureSeedData(WebApplication app)
     {
-        using (var scope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope())
-        {
+        using var scope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
+        
             var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
             context.Database.Migrate();
 
             var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            if (userMgr.Users.Any()) return;
+
             var alice = userMgr.FindByNameAsync("alice").Result;
             if (alice == null)
             {
@@ -35,9 +38,6 @@ public class SeedData
 
                 result = userMgr.AddClaimsAsync(alice, new Claim[]{
                             new Claim(JwtClaimTypes.Name, "Alice Smith"),
-                            new Claim(JwtClaimTypes.GivenName, "Alice"),
-                            new Claim(JwtClaimTypes.FamilyName, "Smith"),
-                            new Claim(JwtClaimTypes.WebSite, "http://alice.com"),
                         }).Result;
                 if (!result.Succeeded)
                 {
@@ -67,10 +67,6 @@ public class SeedData
 
                 result = userMgr.AddClaimsAsync(bob, new Claim[]{
                             new Claim(JwtClaimTypes.Name, "Bob Smith"),
-                            new Claim(JwtClaimTypes.GivenName, "Bob"),
-                            new Claim(JwtClaimTypes.FamilyName, "Smith"),
-                            new Claim(JwtClaimTypes.WebSite, "http://bob.com"),
-                            new Claim("location", "somewhere")
                         }).Result;
                 if (!result.Succeeded)
                 {
@@ -82,6 +78,6 @@ public class SeedData
             {
                 Log.Debug("bob already exists");
             }
-        }
+        
     }
 }
